@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-public class EmployeeManagementSystem implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -8698467514680864504L;
+public class EmployeeManagementSystem {
 
     //nested employee and exception class
-    private class Employee implements Serializable {
+    private static class Employee implements Serializable {
         @Serial
         private static final long serialVersionUID = -2164774094799010440L;
 
@@ -71,7 +69,7 @@ public class EmployeeManagementSystem implements Serializable {
                     '}';
         }
     }
-    private class DuplicateEmployeeID extends Exception{
+    private static class DuplicateEmployeeID extends Exception{
 
         @Serial
         private static final long serialVersionUID = 5607382074092700703L;
@@ -82,14 +80,14 @@ public class EmployeeManagementSystem implements Serializable {
 
     private enum fields { NAME, DEPT, SALARY}
 
-    private List<Employee> employeeList = new ArrayList<>();
+    private final List<Employee> employeeList = new ArrayList<>();
     private final File file = new File("resources/employees.txt");
 
     public static void main(String[] args) {
         EmployeeManagementSystem ems = new EmployeeManagementSystem();
         ems.readIn();
 
-        //adds the 3 starting employees, prints stack trace of a custom exception when they already exist
+        //adds the 3 starting employees, prints message from a custom exception when they already exist
         ems.addEmployee("Foo Bar", "IT", 100000, 1);
         ems.addEmployee("John Doe", "Finance", 50000, 2);
         ems.addEmployee("Jane Doe", "HR", 75000, 3);
@@ -97,9 +95,11 @@ public class EmployeeManagementSystem implements Serializable {
 
 
         System.out.println("ems.employeeList = " + ems.employeeList);
+
         //removes an employee that doesn't exist
         ems.removeEmployee(4);
 
+        //list of all departments
         System.out.println("all departments = " + ems.listDept());
 
         ems.addEmployee("Foo Bar #2", "IT", 120000, 4);
@@ -122,21 +122,20 @@ public class EmployeeManagementSystem implements Serializable {
         ems.writeOut();
     }
 
-    //adds an employee or throws the custom exception DuplicateEmployeeID
-    private void addEmployeeHelper(String name, String dept, int salary, int id) throws DuplicateEmployeeID{
-        if (employeeList.stream().anyMatch(employee -> employee.getId() ==id))
-            throw new DuplicateEmployeeID(id);
-        employeeList.add(new Employee(name,dept,salary, id));
-    }
-
     //passes information to helper and catches the custom exception
     public void addEmployee(String name, String dept, int salary, int id){
         try {
             addEmployeeHelper(name, dept, salary, id);
             System.out.println("Employee " + name + " has been added!");
         }catch (DuplicateEmployeeID e){
-            System.out.println(e.getMessage());;
+            System.out.println(e.getMessage());
         }
+    }
+    //adds an employee or throws the custom exception DuplicateEmployeeID
+    private void addEmployeeHelper(String name, String dept, int salary, int id) throws DuplicateEmployeeID{
+        if (employeeList.stream().anyMatch(employee -> employee.getId() ==id))
+            throw new DuplicateEmployeeID(id);
+        employeeList.add(new Employee(name, dept, salary, id));
     }
 
     //removes an employee or prints an error if the employee does not exist
@@ -155,20 +154,15 @@ public class EmployeeManagementSystem implements Serializable {
         try {
             Employee toUpdate = employeeList.stream().filter(employee -> employee.getId() == id).findFirst().get();
             switch (field) {
-                case NAME:
-                    toUpdate.setName(info);
-                    break;
-                case DEPT:
-                    toUpdate.setDept(info);
-                    break;
-                case SALARY:
-                    toUpdate.setSalary(Integer.parseInt(info));
-                    break;
-                default:
-                    System.out.println("Please enter a valid updatable field: name, dept, or salary");
+                case NAME -> toUpdate.setName(info);
+                case DEPT -> toUpdate.setDept(info);
+                case SALARY -> toUpdate.setSalary(Integer.parseInt(info));
+                default -> System.out.println("Please enter a valid updatable field: name, dept, or salary");
             }
         }catch (NoSuchElementException e) {
-            System.err.println("No Employee with ID: " + id);
+            System.out.println("No Employee with ID: " + id);
+        }catch (NumberFormatException e){
+            System.out.println("Salary must be updated with an integer value");
         }
 
 
@@ -195,12 +189,7 @@ public class EmployeeManagementSystem implements Serializable {
             System.out.println("File read complete!");
 
         } catch (FileNotFoundException e) {
-            try {
-                System.out.println("File not found! creating new!");
-                file.createNewFile();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            System.out.println("No file found! Will create new on write");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
